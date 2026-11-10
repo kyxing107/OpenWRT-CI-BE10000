@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2026 VIKINGYFY
+
+name: Cache-Clean
+
+on:
+  #定时清理已关闭（仅保留下方手动触发 workflow_dispatch）
+  #手动清理
+  workflow_dispatch:
+
+permissions: write-all
+
+env:
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Projects
+        uses: actions/checkout@main
+
+      - name: Cache Clean
+        run: gh cache delete --all
