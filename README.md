@@ -105,26 +105,28 @@ qualcommbe-ipq95xx-xiaomi_be10000-squashfs-sysupgrade-*.bin   ← 后续升级�
 
 | 组 | 内容 | 仓库 / 分支 |
 | --- | --- | --- |
-| 主题（2 套） | `argon`、`vantage`(+app/config) | `sbwml/luci-theme-argon` @ `openwrt-25.12`；`anothaDev/luci-theme-vantage` @ `main` |
+| 主题（2 套） | `argon`、`vantage`(+`luci-app-vantage`) | `sbwml/luci-theme-argon` @ `openwrt-25.12`；`anothaDev/luci-theme-vantage` @ `main`（整仓 clone） |
 | openclash | `luci-app-openclash` | `vernesong/OpenClash` @ `dev`（pkg） |
 | openlist | `openlist2` 核心 + LuCI | `sbwml/luci-app-openlist2` @ `main` |
 | netwizard | `luci-app-netwizard` | `sirpdboy/luci-app-netwizard` @ `main` |
-| lucky | 核心 + LuCI + 中文语言包 | `gdy666/luci-app-lucky` @ `main`（pkg） |
+| lucky | 核心 `lucky` + 界面 `luci-app-lucky` | `gdy666/luci-app-lucky` @ `main`（**整仓 clone**，中文界面由 LuCI 语言配置自动生成） |
 | **AdGuard Home**（新增） | `luci-app-adguardhome` | `kenzok78/luci-app-adguardhome` @ `main`（针对 ImmortalWrt 24.10+/25.12 重构版） |
 | **PassWall**（新增） | `luci-app-passwall` | `Openwrt-Passwall/openwrt-passwall` @ `main`（`pkg` 模式，见下方说明） |
-| 灯光控制 RGB | `rgbcontrol` + `luci-app-rgbcontrol` | `RuijieNetworksCommunity/luci-app-rgbcontrol` @ `master`（pkg） |
+| 灯光控制 RGB | `rgbcontrol` + `luci-app-rgbcontrol` | `RuijieNetworksCommunity/luci-app-rgbcontrol` @ `master`（**整仓 clone**） |
 
 **无需拉取仓库、只需 `=y`：**
 
 - LED 配置 / 风扇控制的内核模块 `kmod-leds-gpio`、`kmod-leds-pwm`、`kmod-hwmon-pwmfan`、`kmod-gpio-pwm`，由 6.18 源码树编译。
 - `fancontrol` / `luci-app-fancontrol` / `luci-i18n-fancontrol-zh-cn` 目标源码树已自带。
-- `luci-app-vantage` / `luci-app-vantage-config` 由 `Settings.sh` 按 `WRT_THEME` 自动注入。
+- `luci-app-vantage` / `luci-theme-vantage` 由 `Settings.sh` 按 `WRT_THEME` 自动注入（**没有** `luci-app-vantage-config` 这个包，勿手写）。
 
 **关于 PassWall 的三点：**
 
 1. 拉取写法**沿用上游作者**：`UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"`（见上游 `Scripts/Packages.sh` 第 62 行）。仓库根目录只有 `luci-app-passwall/` 一个子包，用 `pkg` 模式提取即可，不必整仓 clone。
 2. **代理核心不用额外拉仓库**：`xray-core`、`sing-box`、`chinadns-ng`、`shadowsocks-rust`、`hysteria`、`dns2socks`、`ipt2socks`、`microsocks` 等由目标源码树 `feeds.conf.default` 的 `immortalwrt/packages` 提供（已逐个验证存在），上游作者也未额外拉 `openwrt-passwall-packages`。相比 SSR Plus+ 整仓 30+ 包，这里只引入 1 个 LuCI 包，编译更快。
 3. 其 Makefile 原生定义 `Nftables_Transparent_Proxy`（`default y if PACKAGE_firewall4`），`GENERAL.txt` 已显式写 `CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y`，走 nftables 而非 iptables，适配 6.18 内核。
+
+**2026-11-12 二轮修复（WRT-TEST 验证后）：** 首轮 `WRT-TEST` 生成的 `.config` 显示 `lucky` / `rgbcontrol` 的核心包在、但界面包 `luci-app-lucky` / `luci-app-rgbcontrol` **完全没注册**。根因是这两行用了 `pkg` 模式：仓库名恰好等于界面子包名，`cp -rf` 目标目录已存在导致子包被嵌套复制回原处，随后 `rm -rf $REPO_PATH` 把它一起删掉。现改为**整仓 clone**（去掉 `pkg` 参数），构建系统递归扫描到两个子包的 Makefile，与 `vantage` 行同款写法。同时删掉 3 行从未生效的死配置（`luci-app-vantage-config`、两个手写中文包）。详见工作区文档《WRT-TEST验证结果诊断-2026-11-12.md》。
 
 **运行时注意：** AdGuard Home、OpenClash、PassWall 都会接管 DNS 与流量分流，三者同时启用时建议只让一个负责 53 端口（例如 AdGuardHome 设为 dnsmasq 上游、不劫持 53），并协调 OpenClash / PassWall 的 DNS 分流与透明代理规则，避免互相抢占。此为配置问题，不影响编译。
 
@@ -175,6 +177,7 @@ CONFIG_PACKAGE_luci-app-openclash=n
 | 接近 6 小时超时 | 已通过「单平台 + 单机型」精简规避；**PassWall 的 `INCLUDE_*` 选项会连带编译多个代理核心**，仍超时可先临时去掉 `CONFIG_PACKAGE_luci-app-passwall=y` 编一次，或启用 Actions 缓存 |
 | 想长期私有定制 | 新建 `Config/PRIVATE.txt` / `Scripts/PRIVATE.sh`，会被自动加载；**不要写入 token 或密码** |
 | 编译日志里找不到某插件 | 确认 `Scripts/Packages.sh` 已拉取该仓库，且 `Config/GENERAL.txt` 里对应 `CONFIG_PACKAGE_xxx=y` 存在 |
+| **`.config` 里核心包在、界面 `luci-app-*` 不在** | 多为「一仓多包」仓库误用 `pkg` 模式且 `REPO_NAME` 与界面子包同名（`cp` 目标已存在→嵌套复制→被 `rm -rf` 删掉）。改用整仓 clone（把 `pkg` 参数换成 `""`），并用 `WRT-TEST` 生成的 `.config` 核对接口包是否 `=y` |
 
 ---
 
