@@ -113,11 +113,15 @@ CONFIG_PACKAGE_usbutils=y
 CONFIG_PACKAGE_xz-utils=y
 
 #===== 用户选定插件（2026-11-12 全量重新选择：1,9,12,21,26,50-53 + AdGuard Home + PassWall）=====
+# 2026-11-12 修复（见《WRT-TEST验证结果诊断-2026-11-12.md》第五节）：
+#   lucky / rgbcontrol 的界面包改由 Packages.sh 整仓 clone 注册，不再依赖本文件手写无效行；
+#   删除 3 行从未生效的死配置：luci-app-vantage-config（源码树无此包）、
+#   luci-i18n-lucky-zh-cn / luci-i18n-rgbcontrol-zh-cn（中文界面由 Settings.sh 的
+#   CONFIG_LUCI_LANG_zh_Hans 自动为已注册的 luci-app 生成，.config 已实证 11 个自动 zh-cn 包）。
 #主题：1 argon、9 vantage（vantage 同时由 Settings.sh 按 WRT_THEME 自动注入）
 CONFIG_PACKAGE_luci-theme-argon=y
 CONFIG_PACKAGE_luci-theme-vantage=y
 CONFIG_PACKAGE_luci-app-vantage=y
-CONFIG_PACKAGE_luci-app-vantage-config=y
 #12 openclash
 CONFIG_PACKAGE_luci-app-openclash=y
 #21 openlist2（OpenList / Alist 分支，核心 + LuCI）
@@ -125,10 +129,9 @@ CONFIG_PACKAGE_openlist2=y
 CONFIG_PACKAGE_luci-app-openlist2=y
 #26 netwizard（网络向导）
 CONFIG_PACKAGE_luci-app-netwizard=y
-#50 lucky（核心 + LuCI + 中文语言包，三者需同时勾选）
+#50 lucky（核心 + LuCI；界面包 luci-app-lucky 由 Packages.sh 整仓 clone 注册）
 CONFIG_PACKAGE_lucky=y
 CONFIG_PACKAGE_luci-app-lucky=y
-CONFIG_PACKAGE_luci-i18n-lucky-zh-cn=y
 #新增：AdGuard Home（kenzok78 适配版，由 Scripts/Packages.sh 拉取）
 CONFIG_PACKAGE_luci-app-adguardhome=y
 #新增：PassWall（Openwrt-Passwall/openwrt-passwall @ main，pkg 模式提取）
@@ -149,10 +152,9 @@ CONFIG_PACKAGE_kmod-gpio-pwm=y
 CONFIG_PACKAGE_fancontrol=y
 CONFIG_PACKAGE_luci-app-fancontrol=y
 CONFIG_PACKAGE_luci-i18n-fancontrol-zh-cn=y
-# 灯光控制 RGB（由 Scripts/Packages.sh 拉取 RuijieNetworksCommunity/luci-app-rgbcontrol）
+# 灯光控制 RGB（界面包 luci-app-rgbcontrol 由 Packages.sh 整仓 clone 注册）
 CONFIG_PACKAGE_rgbcontrol=y
 CONFIG_PACKAGE_luci-app-rgbcontrol=y
-CONFIG_PACKAGE_luci-i18n-rgbcontrol-zh-cn=y
 
 # ⚠️ 已知限制：目标 6.18 设备树（ipq9570-be10000.dts）只有 gpio-leds，
 # 没有 pwm-rgb / pwm-fan / pwmchip 节点。用户本次选择「先不打 DTS 补丁，只编软件」：
