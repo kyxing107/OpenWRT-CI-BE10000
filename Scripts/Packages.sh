@@ -7,6 +7,9 @@
 #   1 argon、9 vantage、12 openclash、21 openlist2、26 netwizard、50 lucky、
 #   51-53 LED/风扇/灯光控制，另新增 AdGuard Home 与 PassWall
 # 2026-11-12 追加：应用户要求去掉 ShadowsocksR Plus+，改用 PassWall（全量清单第 13 项）
+# 2026-11-12 修复：lucky / rgbcontrol 由 pkg 模式改为整仓 clone，
+#   避免界面子包（luci-app-lucky / luci-app-rgbcontrol）在 WRT-TEST 中未被注册。
+#   详见《WRT-TEST验证结果诊断-2026-11-12.md》第四节。
 
 #安装和更新软件包
 UPDATE_PACKAGE() {
@@ -61,7 +64,13 @@ UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
 UPDATE_PACKAGE "netwizard" "sirpdboy/luci-app-netwizard" "main"
 
 #===== lucky（50，gdy666 官方版：核心 + LuCI + 中文包）=====
-UPDATE_PACKAGE "lucky" "gdy666/luci-app-lucky" "main" "pkg" "luci-app-lucky luci-i18n-lucky-zh-cn"
+# 不用 pkg 模式：整仓 clone 到 ./package/luci-app-lucky，构建系统递归扫描到
+#   luci-app-lucky/ 与 lucky/ 两个子包的 Makefile，两者都会注册进 .config。
+# 原因：仓库名 REPO_NAME 恰为 luci-app-lucky，pkg 模式下 cp -rf 的目标目录已存在，
+#   界面子包被嵌套复制回原处，随后 rm -rf $REPO_PATH 把它一起删掉，只剩核心 lucky。
+#   WRT-TEST 的 .config 实证：lucky=y 有、luci-app-lucky 无。vantage 行（同样整仓 clone）
+#   的 luci-app-vantage + luci-theme-vantage 双包都成功注册，证明整仓方案有效。
+UPDATE_PACKAGE "lucky" "gdy666/luci-app-lucky" "main" "" "luci-app-lucky luci-i18n-lucky-zh-cn"
 
 #===== AdGuard Home（新增：kenzok78 适配版，针对 ImmortalWrt 24.10+/25.12 重构）=====
 # 仓库根目录本身就是 package（根目录含 Makefile），克隆到 ./package/luci-app-adguardhome 即可。
@@ -80,9 +89,9 @@ UPDATE_PACKAGE "adguardhome" "kenzok78/luci-app-adguardhome" "main"
 UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
 
 #===== 灯光控制 RGB（53）=====
-# 仓库内含 rgbcontrol（C 守护进程）与 luci-app-rgbcontrol（Lua CBI），
-# 用 pkg 模式可一次把两个子目录都提取到 ./package/。
-UPDATE_PACKAGE "rgbcontrol" "RuijieNetworksCommunity/luci-app-rgbcontrol" "master" "pkg" "luci-app-rgbcontrol"
+# 仓库内含 rgbcontrol（C 守护进程）与 luci-app-rgbcontrol（Lua CBI）两个子包，
+# 同 lucky：不用 pkg 模式，整仓 clone 让两个子包都被扫描注册。
+UPDATE_PACKAGE "rgbcontrol" "RuijieNetworksCommunity/luci-app-rgbcontrol" "master" "" "luci-app-rgbcontrol"
 
 #===== LED 配置（51）与风扇控制（52）=====
 # 内核模块（kmod-leds-gpio / kmod-leds-pwm / kmod-hwmon-pwmfan / kmod-gpio-pwm）
