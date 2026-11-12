@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 #
-# 定制版：仅拉取用户选定的第三方插件仓库（2026-11-10）
-#   主题 1-7 全部 + 27 组 LianXia233 系列 + openclash / mosdns / lucky / openlist
+# 定制版：仅拉取用户选定的第三方插件仓库
+# 2026-11-12 全量重新选择：
+#   1 argon、9 vantage、12 openclash、21 openlist2、26 netwizard、50 lucky、
+#   51-53 LED/风扇/灯光控制，另新增 AdGuard Home 与 PassWall
+# 2026-11-12 追加：应用户要求去掉 ShadowsocksR Plus+，改用 PassWall（全量清单第 13 项）
 
 #安装和更新软件包
 UPDATE_PACKAGE() {
@@ -44,38 +47,47 @@ UPDATE_PACKAGE() {
 
 # UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg（可选，从大杂烩中提取子包）" "额外同名包（可选）"
 
-#===== 主题组 1-7 =====
+#===== 主题（1 argon、9 vantage）=====
 UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
-UPDATE_PACKAGE "aurora" "eamonxg/luci-theme-aurora" "master"
-UPDATE_PACKAGE "aurora-config" "eamonxg/luci-app-aurora-config" "master"
-UPDATE_PACKAGE "fluent" "LazuliKao/luci-theme-fluent" "main"
-UPDATE_PACKAGE "footstrap" "VizzleTF/luci-theme-footstrap" "main"
-UPDATE_PACKAGE "kucat" "sirpdboy/luci-theme-kucat" "master"
-UPDATE_PACKAGE "kucat-config" "sirpdboy/luci-app-kucat-config" "master"
-UPDATE_PACKAGE "shadcn" "eamonxg/luci-theme-shadcn" "main"
 UPDATE_PACKAGE "vantage" "anothaDev/luci-theme-vantage" "main"
 
-#===== openclash =====
+#===== openclash（12）=====
 UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
 
-#===== mosdns =====
-UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
-
-#===== openlist（OpenList / Alist 分支）=====
+#===== openlist2（21，OpenList / Alist 分支）=====
 UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
 
-#===== lucky（gdy666 官方版，仓库内含 lucky 核心 + luci-app-lucky + 中文包）=====
+#===== netwizard（26，网络向导）=====
+UPDATE_PACKAGE "netwizard" "sirpdboy/luci-app-netwizard" "main"
+
+#===== lucky（50，gdy666 官方版：核心 + LuCI + 中文包）=====
 UPDATE_PACKAGE "lucky" "gdy666/luci-app-lucky" "main" "pkg" "luci-app-lucky luci-i18n-lucky-zh-cn"
 
-#===== 27 组：LianXia233 系列（机型/模组专用，已拉取，默认不编入固件）=====
-UPDATE_PACKAGE "airpi3000m-fancontrol" "LianXia233/luci-app-airpi3000m-fancontrol" "main"
-UPDATE_PACKAGE "chfs" "LianXia233/luci-app-chfs" "main"
-UPDATE_PACKAGE "fm350" "LianXia233/luci-app-fm350" "main"
-UPDATE_PACKAGE "h5000m-netmode" "LianXia233/luci-app-h5000m-netmode" "main"
-UPDATE_PACKAGE "mt5700" "LianXia233/luci-app-mt5700" "main"
-UPDATE_PACKAGE "mt5700m" "LianXia233/luci-app-mt5700m" "main"
-UPDATE_PACKAGE "netmonitor" "LianXia233/luci-app-netmonitor" "main"
-UPDATE_PACKAGE "qmodem-generic" "LianXia233/luci-app-qmodem-generic" "main"
+#===== AdGuard Home（新增：kenzok78 适配版，针对 ImmortalWrt 24.10+/25.12 重构）=====
+# 仓库根目录本身就是 package（根目录含 Makefile），克隆到 ./package/luci-app-adguardhome 即可。
+# UPDATE_PACKAGE 会先清掉 feeds 里的同名官方包，正好避免与官方 adguardhome 冲突。
+UPDATE_PACKAGE "adguardhome" "kenzok78/luci-app-adguardhome" "main"
+
+#===== PassWall（替换原 ShadowsocksR Plus+；沿用上游 VIKINGYFY/OpenWRT-CI 的官方写法）=====
+# 上游 Scripts/Packages.sh 第 62 行即：
+#   UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
+# 仓库根目录只有 luci-app-passwall/ 一个子包，用 pkg 模式提取到 ./package/ 即可。
+# 代理核心（xray-core / sing-box / chinadns-ng / shadowsocks-rust / hysteria / dns2socks 等）
+#   由目标源码树 feeds.conf.default 的 immortalwrt/packages 提供（已逐个验证存在），
+#   故无需额外 clone Openwrt-Passwall/openwrt-passwall-packages，与上游保持一致。
+# Makefile 原生定义 Nftables_Transparent_Proxy（default y if PACKAGE_firewall4），
+#   适配目标 6.18 内核 + nftables；相比 SSR Plus+ 整仓 30+ 包，这里只引入 1 个 LuCI 包。
+UPDATE_PACKAGE "passwall" "Openwrt-Passwall/openwrt-passwall" "main" "pkg"
+
+#===== 灯光控制 RGB（53）=====
+# 仓库内含 rgbcontrol（C 守护进程）与 luci-app-rgbcontrol（Lua CBI），
+# 用 pkg 模式可一次把两个子目录都提取到 ./package/。
+UPDATE_PACKAGE "rgbcontrol" "RuijieNetworksCommunity/luci-app-rgbcontrol" "master" "pkg" "luci-app-rgbcontrol"
+
+#===== LED 配置（51）与风扇控制（52）=====
+# 内核模块（kmod-leds-gpio / kmod-leds-pwm / kmod-hwmon-pwmfan / kmod-gpio-pwm）
+# 由 6.18 源码树直接编译；fancontrol / luci-app-fancontrol 目标源码树已自带。
+# 三项均无需额外拉取第三方仓库，只需在 Config/GENERAL.txt 里写 =y。
 
 #===== 可选：openlist2 需要较新 Golang 时启用（默认关闭）=====
 # 若编译报 "go: requires go >= 1.25" 之类错误，取消下面两行注释后重新编译。
