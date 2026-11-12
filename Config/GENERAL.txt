@@ -112,40 +112,53 @@ CONFIG_PACKAGE_usbmuxd=y
 CONFIG_PACKAGE_usbutils=y
 CONFIG_PACKAGE_xz-utils=y
 
-#===== 用户选定插件（2026-11-10）=====
-#主题组 1-7（全部 7 套主题；vantage 也会由 Settings.sh 按 WRT_THEME 自动加入）
+#===== 用户选定插件（2026-11-12 全量重新选择：1,9,12,21,26,50-53 + AdGuard Home + PassWall）=====
+#主题：1 argon、9 vantage（vantage 同时由 Settings.sh 按 WRT_THEME 自动注入）
 CONFIG_PACKAGE_luci-theme-argon=y
-CONFIG_PACKAGE_luci-theme-aurora=y
-CONFIG_PACKAGE_luci-app-aurora-config=y
-CONFIG_PACKAGE_luci-theme-fluent=y
-CONFIG_PACKAGE_luci-theme-footstrap=y
-CONFIG_PACKAGE_luci-theme-kucat=y
-CONFIG_PACKAGE_luci-app-kucat-config=y
-CONFIG_PACKAGE_luci-theme-shadcn=y
 CONFIG_PACKAGE_luci-theme-vantage=y
 CONFIG_PACKAGE_luci-app-vantage=y
 CONFIG_PACKAGE_luci-app-vantage-config=y
-#openclash
+#12 openclash
 CONFIG_PACKAGE_luci-app-openclash=y
-#mosdns（v2dat 为其依赖）
-CONFIG_PACKAGE_luci-app-mosdns=y
-CONFIG_PACKAGE_v2dat=y
-#lucky（核心 + LuCI + 中文语言包，官方文档要求三者同时勾选）
+#21 openlist2（OpenList / Alist 分支，核心 + LuCI）
+CONFIG_PACKAGE_openlist2=y
+CONFIG_PACKAGE_luci-app-openlist2=y
+#26 netwizard（网络向导）
+CONFIG_PACKAGE_luci-app-netwizard=y
+#50 lucky（核心 + LuCI + 中文语言包，三者需同时勾选）
 CONFIG_PACKAGE_lucky=y
 CONFIG_PACKAGE_luci-app-lucky=y
 CONFIG_PACKAGE_luci-i18n-lucky-zh-cn=y
-#openlist（OpenList / Alist 分支，核心 + LuCI）
-CONFIG_PACKAGE_openlist2=y
-CONFIG_PACKAGE_luci-app-openlist2=y
+#新增：AdGuard Home（kenzok78 适配版，由 Scripts/Packages.sh 拉取）
+CONFIG_PACKAGE_luci-app-adguardhome=y
+#新增：PassWall（Openwrt-Passwall/openwrt-passwall @ main，pkg 模式提取）
+# 显式选中 nftables 透明代理，避免退回 iptables 路径（目标为 firewall4 + 6.18 内核）
+CONFIG_PACKAGE_luci-app-passwall=y
+CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y
 
-#===== 27 组（LianXia233 系列）：仓库已全部拉取，默认不编入固件 =====
-#原因：多为特定机型/5G 模组专用，编入 qualcommbe 平台可能引入无依赖的内核模块导致编译失败。
-#如需某个，取消对应注释即可（GENERAL.txt 会在 Settings.sh 之前合并进 .config）。
-#CONFIG_PACKAGE_luci-app-airpi3000m-fancontrol=y
-#CONFIG_PACKAGE_luci-app-chfs=y
-#CONFIG_PACKAGE_luci-app-fm350=y
-#CONFIG_PACKAGE_luci-app-h5000m-netmode=y
-#CONFIG_PACKAGE_luci-app-mt5700=y
-#CONFIG_PACKAGE_luci-app-mt5700m=y
-#CONFIG_PACKAGE_luci-app-netmonitor=y
-#CONFIG_PACKAGE_luci-app-qmodem-generic=y
+#===== LED 配置 / 风扇控制 / 灯光控制（51-53，从 QWRT R26.11.08 提取，2026-11-12）=====
+# 说明：源固件内核为 5.4.213，其 .ko 严禁搬用；以下内核模块全部由 6.18 源码树重新编译。
+# 三组 userspace 程序（fancontrol / rgbcontrol 为 aarch64 ELF）与 LuCI Lua 界面可跨内核使用，
+# 目标固件已启用 luci-lua-runtime + luci-compat，兼容旧版 Lua CBI。
+# 内核模块：LED 与 PWM 风扇（kmod-leds-gpio 目标配置已默认启用，此处显式声明）
+CONFIG_PACKAGE_kmod-leds-gpio=y
+CONFIG_PACKAGE_kmod-leds-pwm=y
+CONFIG_PACKAGE_kmod-hwmon-pwmfan=y
+CONFIG_PACKAGE_kmod-gpio-pwm=y
+# 风扇控制（目标源码树已自带 fancontrol / luci-app-fancontrol，无需额外 feed）
+CONFIG_PACKAGE_fancontrol=y
+CONFIG_PACKAGE_luci-app-fancontrol=y
+CONFIG_PACKAGE_luci-i18n-fancontrol-zh-cn=y
+# 灯光控制 RGB（由 Scripts/Packages.sh 拉取 RuijieNetworksCommunity/luci-app-rgbcontrol）
+CONFIG_PACKAGE_rgbcontrol=y
+CONFIG_PACKAGE_luci-app-rgbcontrol=y
+CONFIG_PACKAGE_luci-i18n-rgbcontrol-zh-cn=y
+
+# ⚠️ 已知限制：目标 6.18 设备树（ipq9570-be10000.dts）只有 gpio-leds，
+# 没有 pwm-rgb / pwm-fan / pwmchip 节点。用户本次选择「先不打 DTS 补丁，只编软件」：
+# 系统 LED 可用；RGB 氛围灯与 PWM 风扇暂不生效，需后续单独打设备树补丁才会真正生效。
+# 详见《固件驱动提取与集成报告.md》。
+
+# ⚠️ 运行时注意：AdGuard Home 与 OpenClash 都会接管 DNS。
+# 建议把 AdGuardHome 设为 dnsmasq 上游（不劫持 53 端口），并与 OpenClash 的 DNS 分流协调，
+# 否则两者会互相抢占 53 端口导致解析异常。此为配置问题，不影响编译。
